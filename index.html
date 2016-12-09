@@ -118,11 +118,11 @@
                   /* if (event.which === 32 || event.keyCode == 32){
                        event.preventDefault();                          //----Space Handling/Restriction
                    }*/
-                    (event.charCode == 46 || event.keyCode == 46) ? (
+                    (event.charCode == 46) ? (
                         count<2 ? (
                             count++
                         ):(
-                            event.preventDefault(),console.log(count)
+                            event.preventDefault()//,alert(count)
                         )
                     ) : (
                         console.log(event.which+"  "+event.charCode)
@@ -133,7 +133,7 @@
                 if(tAttrs.decimal=="true")// && tAttrs.maxlength==undefined)
                 {
                     //console.log(tAttrs.decimal);
-                    tElement.bind("keypress", keyPressCount);
+                    tElement.bind("keydown keypress keyup", keyPressCount);
                     tElement.bind("keyup keypress",countRestore);
                     tElement.bind("keydown keyup",delCountRestore);
                    // tElement.bind("keyup", setSignificantPlace);
