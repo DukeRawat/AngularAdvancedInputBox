@@ -118,7 +118,7 @@
                   /* if (event.which === 32 || event.keyCode == 32){
                        event.preventDefault();                          //----Space Handling/Restriction
                    }*/
-                    (event.charCode == 46) ? (
+                    (event.which === 229 || event.charCode == 46) ? (
                         count<2 ? (
                             count++
                         ):(
