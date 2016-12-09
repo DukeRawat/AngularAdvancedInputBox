@@ -1,0 +1,306 @@
+<html>
+    <head>
+        <title>Demo of Directive</title>
+       <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.9/angular.min.js"></script>
+       <!--<script src="angular/angular.min.js"></script>-->
+        <script>
+        angular.module('myApp', [])
+            .controller('myController', ['$scope', function($scope) {
+
+            $scope.submit = function(form) {
+                if (form.$valid) {
+                 alert("valid will be valid");
+                }
+                else{
+                    alert("Form is invalid!!");
+                }
+            };
+
+            }])
+            .directive("textAsNumber",function() {
+	return {
+            restrict: 'A',
+            require: 'ngModel',
+            compile: function(tElement, tAttrs) {
+                //------------required variables
+                var count=1;
+                var decimalPat=/\./;
+                var eMax=Number.MAX_VALUE;
+                var eMin=0;//Number.MIN_VALUE; //0
+                //console.log("max= "+eMax+" min= "+eMin);
+                //--------------Required function------------
+                var emaxOnLength = function(){
+                    eMax=0;
+                    if(tAttrs.decimal=="true")
+                    {
+                        for(var i=2;i<=parseInt(tAttrs.maxlength);i++)
+                        {
+                            eMax=(eMax*10)+9;
+                        }
+                        eMax=eMax.toString();
+                        eMax=function(){
+                            return parseFloat(eMax.slice(0, eMax.length-2) + "." + eMax.slice(eMax.length-2));
+                        }();
+                        console.log("decimal eMax= "+eMax);
+                    }
+                else{
+                    for(var i=1;i<=parseInt(tAttrs.maxlength);i++)
+                    {
+                        eMax=(eMax*10)+9;
+                    }
+                    console.log("eMax on length= "+eMax);
+                }     
+                }
+
+                var emaxCompute= function(){
+                    if(tAttrs.max==undefined){
+                        if(tAttrs.maxlength!=undefined)
+                        {
+                            console.log("inside max init");
+                            emaxOnLength();
+                            tElement.attr('max',eMax);
+                            //scope.apply();
+                        }
+                        console.log("max not defined "+eMax);
+                    }
+                    else{
+                        eMax=tAttrs.max;
+                        console.log("defined max= "+eMax);
+                    }
+                }
+
+                //--------------Event Handlers--------------
+               /* var setSignificantPlace = function (event){
+                    var str=tElement[0].value.toString();
+                    var strlength=tElement[0].value.toString().length;
+                    console.log(strlength);
+                    if(str.charAt(length-2)!="."||str.charAt(length-3)!=".")
+                    {
+                        console.log("significant place check");
+                        var strNum=parseInt(str).toFixed(2).toString();
+                        ngModelCtrl.$setViewValue(strNum);
+                            ngModelCtrl.$render();
+                    }
+                };*/
+                var spaceRestrict =function (event){
+                    if (event.which === 32 || event.keyCode == 32){
+                       event.preventDefault();                          //----Space Handling/Restriction
+                   }
+                };
+                var countRestore = function (event){
+                    console.log(tElement[0].value.toString().match(decimalPat));
+                    //----------------------------------------^ || event.which === 46 || event.charCode == 46
+                    (event.which === 08 || event.keyCode == 08) ? (
+                        (tElement[0].value).toString().match(decimalPat) ? (
+                            console.log(tElement[0].value)
+                        ):(count=1,console.log("count fired "+count))
+                    ) : (
+                        console.log(event.which+"  "+event.charCode)
+                        ) 
+                };
+                var delCountRestore = function (event){
+                    //console.log(tElement[0].value.toString().match(decimalPat));
+                    //----------------------------------------^ || event.which === 46 || event.charCode == 46
+                    (event.which === 46) ? (
+                        (tElement[0].value).toString().match(decimalPat) ? (
+                            console.log(tElement[0].value)
+                        ):(count=1,console.log("count fired "+count))
+                    ) : (
+                        console.log(event.which+"  "+event.charCode)
+                        ) 
+                };
+                var keyPressCount = function (event) {
+                   // console.log("value= "+tElement[0].value);
+                  /* if (event.which === 32 || event.keyCode == 32){
+                       event.preventDefault();                          //----Space Handling/Restriction
+                   }*/
+                    (event.which === 46 || event.keyCode == 46) ? (
+                        count<2 ? (
+                            count++
+                        ):(
+                            event.preventDefault(),console.log(count)
+                        )
+                    ) : (
+                        console.log(event.which+"  "+event.charCode)
+                    ) 
+                    };
+                //------DOM element init manipulation--------------
+                tElement.bind("keyup keypress",spaceRestrict);
+                if(tAttrs.decimal=="true")// && tAttrs.maxlength==undefined)
+                {
+                    //console.log(tAttrs.decimal);
+                    tElement.bind("keypress", keyPressCount);
+                    tElement.bind("keyup keypress",countRestore);
+                    tElement.bind("keydown keyup",delCountRestore);
+                   // tElement.bind("keyup", setSignificantPlace);
+                   //tElement.attr('maxlength',parseInt(tAttrs.maxlength)+1);
+                }
+                if(tAttrs.min==undefined)
+                {
+                    if(tAttrs.decimal=="true")
+                    {
+                        eMin=0.00;
+                        console.log("eMin= "+eMin);
+                    }
+                    emaxCompute();
+                    tElement.attr('min',eMin);
+                    console.log("inside undefined min" + eMin);
+                }
+                else{
+                    eMin=tAttrs.min;
+                    emaxCompute();
+                    console.log("inside defined min "+eMin);
+                }
+                /*else if(tAttrs.decimal=="true" && tAttrs.maxlength!=undefined)
+                {
+                    console.log(tElement[0]);
+                    var htmlText = '<input name="nfinstallments" type="text" ng-model="model" maxlength='+tAttrs.maxlength +'decimal="true"  text-as-number pattern="^(?=.*\d)\d*(?:\.\d\d)?$"/>';
+                    tElement.replaceWith(htmlText);
+                }*/
+
+                //-------------------------Directive's Link function---------------
+                var link= function(scope, iElement, iAttrs, ngModelCtrl){
+                    //------------------------Custom validators----------------------
+                    ngModelCtrl.$validators.max = function(modelValue, viewValue) {
+                        if (ngModelCtrl.$isEmpty(viewValue)) {
+                        // consider empty models to be valid
+                        return true;
+                        }
+                        if (parseFloat(viewValue)<=eMax) {
+                        // it is valid
+                        return true;
+                        }
+                        // it is invalid
+                        return false;
+                    };
+
+                    ngModelCtrl.$validators.min = function(modelValue, viewValue) {
+                        if (ngModelCtrl.$isEmpty(viewValue)) {
+                        // consider empty models to be valid
+                        return true;
+                        }
+                        if (parseFloat(viewValue)>=eMin) {
+                        // it is valid
+                        return true;
+                        }
+                        // it is invalid
+                        return false;
+                    };
+
+                    //------------------applying decimal validator only on input with decimal="true"-------------
+                    if(iAttrs.decimal=="true"){
+                    ngModelCtrl.$validators.decimal = function(modelValue, viewValue) {
+                        if (ngModelCtrl.$isEmpty(viewValue)) {
+                        // consider empty models to be valid
+                        return true;
+                        }
+                        /*if(iAttrs.decimal==undefined){
+                            return;
+                        }*/
+                        if (modelValue.charAt(modelValue.length-3)=="." || modelValue.charAt(modelValue.length-2)==".") {
+                        // it is valid
+                        return true;
+                        }
+                        // it is invalid
+                        return false;
+                    };   }                                 
+                    //===============================================================
+                ngModelCtrl.$parsers.push(function(oldVal) {
+                    if (!oldVal) {
+                        return 0;
+                    }
+                    console.info(iAttrs.ngModel); //outputs---- model
+                    if(iAttrs.decimal=="true")
+                    {
+                        console.log("Decimal is true");
+                        //oldVal = angular.isNumber(oldVal) ? oldVal.toString() : oldVal;
+                        var newVal = oldVal.replace(/[^=\d.]|[\\=]/gi,'');
+                        if (newVal != oldVal) {
+                            console.info(oldVal);
+                            ngModelCtrl.$setViewValue(newVal);
+                            ngModelCtrl.$render();
+                        }
+                    }
+                    else{
+                            oldVal = angular.isNumber(oldVal) ? oldVal.toString() : oldVal;
+                        var newVal = oldVal.replace(/[^=\d]|[\\=]/gi,'');
+                        if (newVal != oldVal) {
+                            console.info(oldVal);
+                            ngModelCtrl.$setViewValue(newVal);
+                            ngModelCtrl.$render();
+                        }
+                    }
+                    return newVal; //does not pose any output effect
+                });            
+            }
+            return link;
+            }
+        };
+});
+        </script>
+    </head>
+    <body ng-app="myApp">
+           <div ng-controller="myController">
+               <form name="xyz" novalidate ng-submit="submit(xyz)">
+                   <code>Generic text element</code>
+               <input name="nfinstallments" type="text" id="txt1"  ng-model="model"  />
+               <br/><br/>
+               <code>Modded text element with directive</code>
+               <input name="nfinstallments1" type="text" id="txt1" ng-model="model1" text-as-number/>
+               <span ng-show="xyz.nfinstallments1.$error.max"> The value must be in range 3 to 7!</span>
+               <span ng-show="xyz.nfinstallments1.$invalid"> Invalid text box!</span>
+               <span ng-show="xyz.nfinstallments1.$error.min"> The value is less than 3!</span>
+               <span ng-show="xyz.nfinstallments1.$error.decimal"> Decimal error</span>
+               <br/><br/>
+
+               <code>Modded text element with directive, maxlength</code>
+               <input name="nfinstallments4" type="text" id="txt1" ng-model="model4" maxlength="10" text-as-number/>
+               <span ng-show="xyz.nfinstallments4.$error.max"> The value must be in range 3 to 7!</span>
+               <span ng-show="xyz.nfinstallments4.$invalid"> Invalid text box!</span>
+               <span ng-show="xyz.nfinstallments4.$error.min"> The value is less than 3!</span>
+               <span ng-show="xyz.nfinstallments4.$error.decimal"> Decimal error</span><br/><br/>
+
+               <code>Modded text element with directive, max="19"</code>
+               <input name="nfinstallments3" type="text" id="txt1" ng-model="model3" max="19" text-as-number/>
+               <span ng-show="xyz.nfinstallments3.$error.max"> The value must be less than 19!</span>
+               <span ng-show="xyz.nfinstallments3.$invalid"> Invalid text box!</span>
+               <span ng-show="xyz.nfinstallments3.$error.min"> The value is less than 3!</span>
+               <span ng-show="xyz.nfinstallments3.$error.decimal"> Decimal error</span><br/><br/>
+
+                <code>Modded text element with directive and min="6" </code>
+               <input name="nfinstallments2" type="text" id="txt1" ng-model="model2" min="6" text-as-number/>
+               <span ng-show="xyz.nfinstallments2.$error.max"> The value must be in range 3 to 7!</span>
+               <span ng-show="xyz.nfinstallments2.$invalid"> Invalid text box!</span>
+               <span ng-show="xyz.nfinstallments2.$error.min"> The value is less than 6!</span>
+               <span ng-show="xyz.nfinstallments2.$error.decimal"> Decimal error</span><br/><br/>
+
+                <code>Modded text element with directive, decimal="true"</code>
+               <input name="nfinstallments5" type="text" id="txt1" ng-model="model5" decimal="true" text-as-number/>
+               <span ng-show="xyz.nfinstallments5.$error.max"> The value must be in range 3 to 7!</span>
+               <span ng-show="xyz.nfinstallments5.$invalid"> Invalid text box!</span>
+               <span ng-show="xyz.nfinstallments5.$error.min"> The value is less than 3!</span>
+               <span ng-show="xyz.nfinstallments5.$error.decimal"> Decimal error</span><br/><br/>
+
+               <code>Modded text element with directive,maxlength="9" decimal="true"</code>
+               <input name="nfinstallments6" type="text" id="txt1" ng-model="model6" decimal="true" maxlength="9" decimal="true" text-as-number/>
+               <span ng-show="xyz.nfinstallments6.$error.max"> The value must be in range 0 to 999999.99!</span>
+               <span ng-show="xyz.nfinstallments6.$invalid"> Invalid text box!</span>
+               <span ng-show="xyz.nfinstallments6.$error.min"> The value is less than 3!</span>
+               <span ng-show="xyz.nfinstallments6.$error.decimal"> Decimal error</span><br/><br/>
+
+               <code>Modded text element with directive,min="6" max="1000" maxlength="9" decimal="true"</code>
+               <input name="nfinstallments7" type="text" id="txt1" ng-model="model7" min="6.6" max="1000" decimal="true" maxlength="9" decimal="true" text-as-number/>
+               <span ng-show="xyz.nfinstallments7.$error.max"> The value must be less than 1001!</span>
+               <span ng-show="xyz.nfinstallments7.$invalid"> Invalid text box!</span>
+               <span ng-show="xyz.nfinstallments7.$error.min"> The value is less than 6.6!</span>
+               <span ng-show="xyz.nfinstallments7.$error.decimal"> Decimal error</span><br/><br/>
+
+               <input type="submit" value="sub"/>
+               </form>
+               <code>form validity={{xyz.$valid}}</code>
+               <br><code>form Invalidity={{xyz.$invalid}}</code><br>
+               <code>form $error={{xyz.$error | json}}</code>
+            <p ng-show="xyz.nfinstallments.$error.pattern">"Grave Errror made!!"</p>
+           </div> 
+    </body>
+</html>
