@@ -28,6 +28,7 @@
                 var eMax=Number.MAX_VALUE;
                 var eMin=0;//Number.MIN_VALUE; //0
                 //console.log("max= "+eMax+" min= "+eMin);
+
                 //--------------Required function------------
                 var emaxOnLength = function(){
                     eMax=0;
@@ -86,6 +87,9 @@
                     if (event.which === 32 || event.keyCode == 32){
                        event.preventDefault();                          //----Space Handling/Restriction
                    }
+                   if (event.shiftKey && event.keyCode == 45){
+                       event.preventDefault();                          //---- Shift+Insert restriction
+                   }
                 };
                 var countRestore = function (event){
                     console.log(tElement[0].value.toString().match(decimalPat));
@@ -101,7 +105,7 @@
                 var delCountRestore = function (event){
                     //console.log(tElement[0].value.toString().match(decimalPat));
                     //----------------------------------------^ || event.which === 46 || event.charCode == 46
-                    (event.which === 46) ? (
+                    (event.which === 46 || event.keyCode == 46) ? (
                         (tElement[0].value).toString().match(decimalPat) ? (
                             console.log(tElement[0].value)
                         ):(count=1,console.log("count fired "+count))
@@ -114,7 +118,7 @@
                   /* if (event.which === 32 || event.keyCode == 32){
                        event.preventDefault();                          //----Space Handling/Restriction
                    }*/
-                    (event.which === 46 || event.keyCode == 46) ? (
+                    (event.charCode == 46 || event.keyCode == 46) ? (
                         count<2 ? (
                             count++
                         ):(
@@ -125,7 +129,7 @@
                     ) 
                     };
                 //------DOM element init manipulation--------------
-                tElement.bind("keyup keypress",spaceRestrict);
+                tElement.bind("keyup keypress keydown",spaceRestrict);
                 if(tAttrs.decimal=="true")// && tAttrs.maxlength==undefined)
                 {
                     //console.log(tAttrs.decimal);
